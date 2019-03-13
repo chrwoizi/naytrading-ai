@@ -27,8 +27,8 @@ parser.add_argument('--epochs', type = int, default = 12, help = 'Number of trai
 parser.add_argument('--start_epoch', type = int, default = 0, help = 'Start index in epochs.')
 parser.add_argument('--repeat_train_data', type = int, default = 5, help = 'Number of training data repetitions per epoch (between evaluations).')
 parser.add_argument('--batch_size', type = int, default = 48, help = 'Number of examples per batch.')
-parser.add_argument('--test_file', type = str, default = '../buying_test_norm.csv', help = 'Path to the test data.')
-parser.add_argument('--train_file', type = str, default = '../buying_train_norm.csv', help = 'Path to the train data.')
+parser.add_argument('--test_file', type = str, default = '../buying_test.csv', help = 'Path to the test data.')
+parser.add_argument('--train_file', type = str, default = '../buying_train.csv', help = 'Path to the train data.')
 parser.add_argument('--first_day', type = int, default = 0, help = 'The first day column name e.g. -1814.')
 parser.add_argument('--last_day', type = int, default = 1023, help = 'The last day column name e.g. 0.')
 parser.add_argument('--action', type = str, default = 'buy', help = 'The label used if the user decided on an action for this dataset, e.g. buy or sell')
@@ -102,14 +102,14 @@ if __name__ == '__main__':
 
         with open(FLAGS.model_dir + '/resume.bat', 'w') as text_file:
             arg_str = ' '.join(['--%s=%s' % (flag, str(get_flag(flag))) for flag in flags])
-            text_file.write('python main.py %s\npause' % arg_str)
+            text_file.write('python train.py %s\npause' % arg_str)
 
         with open(FLAGS.model_dir + '/resume_infinitely.bat', 'w') as text_file:
             arg_str = ' '.join(['--%s=%s' % (flag, str(get_flag_infinity(flag))) for flag in flags])
-            text_file.write('python main.py %s\npause' % arg_str)
+            text_file.write('python train.py %s\npause' % arg_str)
 
     if not FLAGS.load:
-        copyfile(os.path.abspath(__file__), FLAGS.model_dir + '/main.py')
+        copyfile(os.path.abspath(__file__), FLAGS.model_dir + '/train.py')
         copyfile(os.path.dirname(os.path.abspath(__file__)) + '/Data.py', FLAGS.model_dir + '/Data.py')
         copyfile(os.path.dirname(os.path.abspath(__file__)) + '/NetworkBase.py', FLAGS.model_dir + '/NetworkBase.py')
         copyfile(os.path.dirname(os.path.abspath(__file__)) + '/GoogLeNet.py', FLAGS.model_dir + '/GoogLeNet.py')

@@ -16,8 +16,6 @@ os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 from GoogLeNet import GoogLeNet
 from InceptionResNetV2 import InceptionResNetV2
 from Data import shape_features
-
-sys.path.append('../../NAYtrading.Common')
 from NAYtrading import NAYtrading
 
 parser = argparse.ArgumentParser()
