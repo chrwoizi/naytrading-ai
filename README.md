@@ -49,7 +49,7 @@ Go to [http://naytrading.com](http://naytrading.com) and register a new account 
 <summary>How to install on Raspberry PI</summary>
 
 ```sh
-pi@raspberrypi:~/ $ git clone https://github.com/chrwoizi/naytrading-ai.git
+pi@raspberrypi:~/ $ git clone https://github.com/chrwoizi/naytrading-ai.git naytrading-ai
 pi@raspberrypi:~/ $ cd naytrading-ai
 pi@raspberrypi:~/naytrading-ai $ ./install.sh
 
