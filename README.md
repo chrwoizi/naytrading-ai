@@ -1,5 +1,5 @@
 # NAYtrading.AI #
-This is the machine learning part of [N.A.Y.trading](/../../).
+This is the machine learning part of [N.A.Y.trading](https://github.com/chrwoizi/naytrading).
 
 ## :mortar_board: Training a Convolutional Neural Network on the recorded data ##
 
@@ -10,7 +10,7 @@ If you have an NVIDIA graphics card:
 - Install [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads)
 - Install [cuDNN](https://developer.nvidia.com/cudnn). Get a cuDNN version that matches your CUDA version number.
 
-Download the sources of [NAYtrading.AI](/NAYtrading.AI) and [NAYtrading.Common](/NAYtrading.Common) or the whole [NAYtrading](/../../) repository. You should now have a folder that contains both the NAYtrading.AI and NAYtrading.Common folders.
+Download the sources.
 
 Go to your N.A.Y.trading [account page](http://naytrading.com/manage) and download your processed trade decisions as CSV files using the download buttons in the *Export preprocessed training data for artifical intelligence training* section.
 Save the files in the NAYtrading.AI folder.
@@ -49,9 +49,9 @@ Go to [http://naytrading.com](http://naytrading.com) and register a new account 
 <summary>How to install on Raspberry PI</summary>
 
 ```sh
-pi@raspberrypi:~/ $ git clone https://github.com/chrwoizi/naytrading.git
-pi@raspberrypi:~/ $ cd naytrading/NAYtrading.AI
-pi@raspberrypi:~/naytrading/NAYtrading.AI $ ./install.sh
+pi@raspberrypi:~/ $ git clone https://github.com/chrwoizi/naytrading-ai.git
+pi@raspberrypi:~/ $ cd naytrading-ai
+pi@raspberrypi:~/naytrading-ai $ ./install.sh
 
 ```
 
