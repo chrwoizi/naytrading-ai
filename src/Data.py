@@ -39,12 +39,9 @@ class Data(object):
 
             print('Preparing data: map')
             dataset = dataset.map(parse_csv, num_parallel_calls = 5)
-            
-            print('Preparing data: batch')
-            dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch_size))
 
             print('Preparing data: batch/prefetch/cache')
-            self.dataset = dataset.prefetch(self.count).cache().repeat(repeat)
+            self.dataset = dataset.batch(batch_size).prefetch(self.count).cache().repeat(repeat)
             if shuffle:
                 self.dataset = self.dataset.shuffle(self.count)
 

@@ -123,15 +123,16 @@ if __name__ == '__main__':
         train_file = FLAGS.model_dir + '/train.csv'
 
     dataset_count = 0
-    with open(train_file, 'r', encoding = 'utf8') as f:
-        i = 0
-        while True:
-            line = f.readline()
-            if not line:
-                break
-            if i > 0 and len(line) > 0:
-                dataset_count = dataset_count + 1
-            i = i + 1
+    if FLAGS.use_tpu:
+        with open(train_file, 'r', encoding = 'utf8') as f:
+            i = 0
+            while True:
+                line = f.readline()
+                if not line:
+                    break
+                if i > 0 and len(line) > 0:
+                    dataset_count = dataset_count + 1
+                i = i + 1
 
     def input_fn(data_file, repeat, params, shuffle):
 
@@ -333,7 +334,10 @@ if __name__ == '__main__':
             gln_aux_exit_4a_weight_falloff = epoch / FLAGS.gln_aux_exit_4a_weight_epochs
             gln_aux_exit_4e_weight_falloff = epoch / FLAGS.gln_aux_exit_4e_weight_epochs
 
-            estimator.train(input_fn = train_input_fn, max_steps = FLAGS.repeat_train_data * int(dataset_count / FLAGS.batch_size))
+            if FLAGS.use_tpu:
+                estimator.train(input_fn = train_input_fn, max_steps = FLAGS.repeat_train_data * int(dataset_count / FLAGS.batch_size))
+            else:
+                estimator.train(input_fn = train_input_fn)
 
             ev = estimator.evaluate(input_fn = test_input_fn)
 
