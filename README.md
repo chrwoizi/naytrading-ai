@@ -3,21 +3,18 @@ This is the machine learning part of [N.A.Y.trading](https://github.com/chrwoizi
 
 ## :mortar_board: Training a Convolutional Neural Network on the recorded data ##
 
-Install [Python 3.6](https://www.python.org/downloads/release/python-366/). Include PIP if asked by the setup.
+1. Install [Python 3.6](https://www.python.org/downloads/release/python-366/). Include PIP if asked by the setup.
 
-If you have an NVIDIA graphics card:
-- Install the latest [graphics card driver](https://www.nvidia.com/Download/index.aspx?lang=en-us)
-- Install [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads)
-- Install [cuDNN](https://developer.nvidia.com/cudnn). Get a cuDNN version that matches your CUDA version number.
+2. If you have an NVIDIA graphics card: Install the [graphics card driver](https://www.nvidia.com/Download/index.aspx?lang=en-us), [CUDA Toolkit](https://developer.nvidia.com/cuda-downloads) and [cuDNN](https://developer.nvidia.com/cudnn). Use the exact versions mentioned on the [TensorFlow GPU Support website](https://www.tensorflow.org/install/gpu#software_requirements). Get a cuDNN version that matches your CUDA version number. If you install the wrong version of CUDA or cuDNN (which may include the latest) it wont work!
 
-Download the sources.
+3. Download the naytrading-ai repository as zip or clone with git.
 
-Go to your N.A.Y.trading [account page](http://naytrading.com/manage) and download your processed trade decisions as CSV files using the download buttons in the *Export preprocessed training data for artifical intelligence training* section.
-Save the files in the NAYtrading.AI folder.
+4. Go to your N.A.Y.trading [account page](http://naytrading.com/manage) and download your processed trade decisions as CSV files using the download buttons in the *Export preprocessed training data for artifical intelligence training* section.
+Save the files in the naytrading-ai folder.
 
-Run [train_buying.bat](train_buying.bat) or [train_selling.bat](train_selling.bat) from the NAYtrading.AI folder.
+5. Run [train_buying.bat](train_buying.bat) or [train_selling.bat](train_selling.bat).
 
-A folder with the name modelXXX will be created where XXX is the current time. Open that folder and run *tensorboard.bat*. Go to [Tensorboard](http://localhost:6006/#scalars&run=log%5Ctrain&_smoothingWeight=0&tagFilter=%5Eloss%24%7C%5Eloss%2Fcombined%7C(buy%7Csell)s_detected%7C(buy%7Csell)s_correct&_ignoreYOutliers=false) to monitor the training progress.
+A folder with the name buyingXXX or sellingXXX will be created where XXX is the current time. Open that folder and run *tensorboard.bat*. Go to [Tensorboard](http://localhost:6006/#scalars&run=log%5Ctrain&_smoothingWeight=0&tagFilter=%5Eloss%24%7C%5Eloss%2Fcombined%7C(buy%7Csell)s_detected%7C(buy%7Csell)s_correct&_ignoreYOutliers=false) to monitor the training progress.
 
 In the top section of Tensorboard it will show three red graphs. 
 
@@ -46,13 +43,12 @@ Go to [http://naytrading.com](http://naytrading.com) and register a new account 
 
 
 <details>
-<summary>How to install on Raspberry PI</summary>
+<summary>How to install for predicting on Raspberry PI</summary>
 
 ```sh
 pi@raspberrypi:~/ $ git clone https://github.com/chrwoizi/naytrading-ai.git naytrading-ai
 pi@raspberrypi:~/ $ cd naytrading-ai
 pi@raspberrypi:~/naytrading-ai $ ./install.sh
-
 ```
 
 Run predict.py with trained buying and selling models:
@@ -75,7 +71,7 @@ python3.4 predict.py --buy_checkpoint_dir=%1\\checkpoint --sleep=%2 --min_loss=0
 </details><p></p>
 
 <details>
-<summary>How to install on Windows</summary>
+<summary>How to install for predicting on Windows</summary>
 
 Download Python 3.x from https://www.python.org/downloads/ and run the installer.
 
@@ -104,4 +100,4 @@ python predict.py --buy_checkpoint_dir=%1\\checkpoint --sleep=%2 --min_loss=0.1 
 
 When asked, enter your AI account email address (the one ending on *.ai*) and its password. **Do not** enter your regular N.A.Y.trading account email address (e.g. *john.doe@mailbox.com*) because predict.py will decide on snapshots using the given account and you probably don't want your real decisions mixed with the network's decisions.
 
-You can continue deciding on snapshots with your regular account and, from time to time, log in as your AI account to check its performance using the [Stats page](http://naytrading.com/app/#!/stats). If you used the naming convention .ai, as mentioned above, you can switch between accounts using the selection box on the top of the stats page.
+If you used the naming convention .ai you can monitor the AI's performance by selecting it on the [Stats page](http://naytrading.com/app/#!/stats). Otherwise, you can login using the .ai email address.

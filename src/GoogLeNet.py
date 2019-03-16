@@ -66,27 +66,27 @@ class GoogLeNet(NetworkBase):
                                                                                           logits=inception4a_exit)
                     loss_inception4a_exit = tf.reduce_mean(softmax_inception4a_exit)
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', loss_inception4a_exit)
+                        tf.contrib.summary.scalar('value', loss_inception4a_exit)
 
                 with tf.variable_scope('inception4e_exit'):
                     softmax_inception4a_exit = tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_sg,
                                                                                           logits=inception4e_exit)
                     loss_inception4e_exit = tf.reduce_mean(softmax_inception4a_exit)
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', loss_inception4e_exit)
+                        tf.contrib.summary.scalar('value', loss_inception4e_exit)
 
                 with tf.variable_scope('exit'):
                     softmax_exit = tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_sg, logits=self.exit)
                     loss_exit = tf.reduce_mean(softmax_exit)
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', loss_exit)
+                        tf.contrib.summary.scalar('value', loss_exit)
 
                 with tf.variable_scope('combined'):
                     self.loss = tf.add(tf.add(tf.scalar_mul(self.aux_exit_4a_weight, loss_inception4a_exit),
                                               tf.scalar_mul(self.aux_exit_4e_weight, loss_inception4e_exit)),
                                        tf.scalar_mul(self.exit_weight, loss_exit))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.loss)
+                        tf.contrib.summary.scalar('value', self.loss)
 
             with tf.variable_scope('accuracy'):
 
@@ -94,13 +94,13 @@ class GoogLeNet(NetworkBase):
                     correct_prediction_inception4a_exit = tf.equal(tf.argmax(inception4a_exit, 1), tf.argmax(self.y, 1))
                     accuracy_inception4a_exit = tf.reduce_mean(tf.cast(correct_prediction_inception4a_exit, tf.float32))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', accuracy_inception4a_exit)
+                        tf.contrib.summary.scalar('value', accuracy_inception4a_exit)
 
                 with tf.variable_scope('inception4e_exit'):
                     correct_prediction_inception4e_exit = tf.equal(tf.argmax(inception4e_exit, 1), tf.argmax(self.y, 1))
                     accuracy_inception4e_exit = tf.reduce_mean(tf.cast(correct_prediction_inception4e_exit, tf.float32))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', accuracy_inception4e_exit)
+                        tf.contrib.summary.scalar('value', accuracy_inception4e_exit)
 
                 with tf.variable_scope('exit'):
                     self.exit_argmax = tf.argmax(self.exit, 1)
@@ -108,7 +108,7 @@ class GoogLeNet(NetworkBase):
                     self.correct_prediction = tf.equal(self.exit_argmax, self.y_argmax)
                     self.accuracy = tf.reduce_mean(tf.cast(self.correct_prediction, tf.float32))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.accuracy)
+                        tf.contrib.summary.scalar('value', self.accuracy)
 
                 with tf.variable_scope('combined'):
                     accuracy_combined = tf.divide(
@@ -117,7 +117,7 @@ class GoogLeNet(NetworkBase):
                                tf.scalar_mul(self.exit_weight, self.accuracy)),
                         tf.add(tf.add(self.aux_exit_4a_weight, self.aux_exit_4e_weight), self.exit_weight))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', accuracy_combined)
+                        tf.contrib.summary.scalar('value', accuracy_combined)
 
             with tf.variable_scope('imitations'):
 
@@ -131,28 +131,28 @@ class GoogLeNet(NetworkBase):
                         tf.reduce_sum(tf.multiply(expected_one, actual_one)),
                         tf.maximum(float(1), tf.reduce_sum(expected_one)))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.positives_detected)
+                        tf.contrib.summary.scalar('value', self.positives_detected)
 
                 with tf.variable_scope('waits_detected'):
                     self.negatives_detected = tf.divide(
                         tf.reduce_sum(tf.multiply(expected_zero, actual_zero)),
                         tf.maximum(float(1), tf.reduce_sum(expected_zero)))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.negatives_detected)
+                        tf.contrib.summary.scalar('value', self.negatives_detected)
 
                 with tf.variable_scope(options['action'] + 's_correct'):
                     self.positives_correct = tf.divide(
                         tf.reduce_sum(tf.multiply(expected_one, actual_one)),
                         tf.maximum(float(1), tf.reduce_sum(actual_one)))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.positives_correct)
+                        tf.contrib.summary.scalar('value', self.positives_correct)
 
                 with tf.variable_scope('waits_correct'):
                     self.negatives_correct = tf.divide(
                         tf.reduce_sum(tf.multiply(expected_zero, actual_zero)),
                         tf.maximum(float(1), tf.reduce_sum(actual_zero)))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.negatives_correct)
+                        tf.contrib.summary.scalar('value', self.negatives_correct)
 
     def __inception_module(self, name, x, out_1x1, reduce3, out_3x1, reduce5, out_5x1, out_pool):
         with tf.variable_scope(name):
