@@ -347,4 +347,5 @@ if __name__ == '__main__':
         except Exception as e:
             print("Unexpected error:", str(e))
 
-        time.sleep(sleep)
+        if sleep > 0:
+            time.sleep(sleep)
