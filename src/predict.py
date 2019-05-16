@@ -43,6 +43,7 @@ parser.add_argument('--max_loss', type=float, default=0.3, help='Sell automatica
 parser.add_argument('--max_gain', type=float, default=0.15, help='Sell automatically if the gain is greater than this value. Set 0 to disable.')
 parser.add_argument('--sell_at_max_factor', type=float, default=1, help='Sell automatically if the current price is at the historic maximum multiplied by this value. Set 0 to disable.')
 parser.add_argument('--max_age', type=float, default=0, help='The maximum age of a snapshot in hours from which to grab in chronological order. Older snapshots will be grabbed from newest to oldest. Set 0 to use server default.')
+parser.add_argument('--historical_batch', type=float, default=0, help='The number of open snapshots to grab in chronological order since the beginning of time. Set 0 to use max_age order logic.')
 
 def sample(chart, x):
     return chart[max(0, min(int(x), len(chart) - 1))]
@@ -295,54 +296,65 @@ if __name__ == '__main__':
                 elif sell_estimator is not None and sell_checkpoint_file != known_checkpoint_file[FLAGS.sell_label] and len(sell_checkpoint_files) <= 2:
                     print(FLAGS.sell_label + " checkpoint is incomplete")
                 else:
-                    print("get snapshot")
-                    snapshot = naytrading.new_snapshot(FLAGS.max_age)
-                    if snapshot is None or snapshot['ID'] is None:
+                    snapshots = None;
+                    
+                    if FLAGS.historical_batch > 0:
+                        print("get " + str(FLAGS.historical_batch) + " snapshots")
+                        snapshots = naytrading.new_ordered_snapshots(FLAGS.historical_batch)
+                    else:
+                        print("get snapshot")
+                        snapshot = naytrading.new_snapshot(FLAGS.max_age)
+                        if not (snapshot is None or snapshot['ID'] is None):
+                            snapshots = [snapshot]
+                            
+                    if snapshots is None or len(snapshots) == 0:
                         sleep = FLAGS.no_snapshot_sleep
                         print("no snapshot available")
-                    elif snapshot['Rates'] is None or len(snapshot['Rates']) == 0:
-                        print('%s %s on %s (snapshot %d)%s' % (
-                            'wait', snapshot['Instrument']['InstrumentName'], snapshot['Date'], snapshot['ID'], ' because no rates were given'))
-                        naytrading.set_decision(snapshot['ID'], 'wait')
                     else:
-                        sleep = FLAGS.sleep
-                        print("prepare snapshot")
-                        chart = get_chart(snapshot)
-                        # plot(chart)
-
-                        if 'PreviousDecision' in snapshot and snapshot['PreviousDecision'] == FLAGS.buy_label:
-
-                            close = float(snapshot['Rates'][-1]['C'])
-                            max_close = max(float(x['C']) for x in snapshot['Rates'])
-
-                            diff = (close - float(snapshot['PreviousBuyRate'])) / float(snapshot['PreviousBuyRate'])
-                            if FLAGS.min_loss > 0 and FLAGS.min_gain > 0 and diff > -FLAGS.min_loss and diff < FLAGS.min_gain:
-                                decision = 'wait'
-                                reason = ' no significant change since it was bought'
-                            elif FLAGS.max_loss > 0 and -diff >= FLAGS.max_loss:
-                                decision = 'sell'
-                                reason = ' loss threshold'
-                            elif FLAGS.max_gain > 0 and diff >= FLAGS.max_gain:
-                                decision = 'sell'
-                                reason = ' gain threshold'
-                            elif FLAGS.sell_at_max_factor > 0 and close >= max_close * FLAGS.sell_at_max_factor:
-                                decision = 'sell'
-                                reason = ' reached maximum'
-                            elif sell_estimator:
-                                refresh_checkpoint(sell_checkpoint_dir, sell_checkpoint_files, sell_checkpoint_file, FLAGS.sell_label)
-                                decision, reason = predict(sell_estimator, FLAGS.sell_label, FLAGS.min_sell_probability, input_fn_factory(chart, 1))
+                        for snapshot in snapshots:
+                            if snapshot['Rates'] is None or len(snapshot['Rates']) == 0:
+                                print('%s %s on %s (snapshot %d)%s' % (
+                                    'wait', snapshot['Instrument']['InstrumentName'], snapshot['Date'], snapshot['ID'], ' because no rates were given'))
+                                naytrading.set_decision(snapshot['ID'], 'wait')
                             else:
-                                decision = 'wait'
-                                reason = ' no checkpoint given and no threshold reached'
+                                sleep = FLAGS.sleep
+                                print("prepare snapshot")
+                                chart = get_chart(snapshot)
+                                # plot(chart)
 
-                        else:
-                            refresh_checkpoint(buy_checkpoint_dir, buy_checkpoint_files, buy_checkpoint_file, FLAGS.buy_label)
-                            decision, reason = predict(buy_estimator, FLAGS.buy_label, FLAGS.min_buy_probability, input_fn_factory(chart, 0))
+                                if 'PreviousDecision' in snapshot and snapshot['PreviousDecision'] == FLAGS.buy_label:
 
-                        print('%s %s on %s (snapshot %d)%s' % (
-                            decision, snapshot['Instrument']['InstrumentName'], snapshot['Date'], snapshot['ID'], reason))
+                                    close = float(snapshot['Rates'][-1]['C'])
+                                    max_close = max(float(x['C']) for x in snapshot['Rates'])
 
-                        naytrading.set_decision(snapshot['ID'], decision)
+                                    diff = (close - float(snapshot['PreviousBuyRate'])) / float(snapshot['PreviousBuyRate'])
+                                    if FLAGS.min_loss > 0 and FLAGS.min_gain > 0 and diff > -FLAGS.min_loss and diff < FLAGS.min_gain:
+                                        decision = 'wait'
+                                        reason = ' no significant change since it was bought'
+                                    elif FLAGS.max_loss > 0 and -diff >= FLAGS.max_loss:
+                                        decision = 'sell'
+                                        reason = ' loss threshold'
+                                    elif FLAGS.max_gain > 0 and diff >= FLAGS.max_gain:
+                                        decision = 'sell'
+                                        reason = ' gain threshold'
+                                    elif FLAGS.sell_at_max_factor > 0 and close >= max_close * FLAGS.sell_at_max_factor:
+                                        decision = 'sell'
+                                        reason = ' reached maximum'
+                                    elif sell_estimator:
+                                        refresh_checkpoint(sell_checkpoint_dir, sell_checkpoint_files, sell_checkpoint_file, FLAGS.sell_label)
+                                        decision, reason = predict(sell_estimator, FLAGS.sell_label, FLAGS.min_sell_probability, input_fn_factory(chart, 1))
+                                    else:
+                                        decision = 'wait'
+                                        reason = ' no checkpoint given and no threshold reached'
+
+                                else:
+                                    refresh_checkpoint(buy_checkpoint_dir, buy_checkpoint_files, buy_checkpoint_file, FLAGS.buy_label)
+                                    decision, reason = predict(buy_estimator, FLAGS.buy_label, FLAGS.min_buy_probability, input_fn_factory(chart, 0))
+
+                                print('%s %s on %s (snapshot %d)%s' % (
+                                    decision, snapshot['Instrument']['InstrumentName'], snapshot['Date'], snapshot['ID'], reason))
+
+                                naytrading.set_decision(snapshot['ID'], decision)
 
         except Exception as e:
             print("Unexpected error:", str(e))
