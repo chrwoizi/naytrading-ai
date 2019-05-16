@@ -51,6 +51,22 @@ class NAYtrading:
         return data
 
 
+    def new_ordered_snapshots(self, count):
+        url = self.naytrading_url + '/api/snapshot/new/open'
+        if count > 0:
+            url = url + '?count=' + str(count)
+        r = self.session.get(url, proxies = self.proxies, timeout = 120)
+
+        if r.status_code == 404:
+            return None
+
+        if r.status_code != 200:
+            raise Exception('%s returned %d' %(url, r.status_code))
+
+        data = r.json()
+        return data
+
+
     def set_decision(self, snapshot_id, decision):
         url = self.naytrading_url + '/api/decision'
 
