@@ -100,4 +100,4 @@ python predict.py --buy_checkpoint_dir=%1\\checkpoint --sleep=%2 --min_loss=0.1 
 
 When asked, enter your AI account email address (the one ending on *.ai*) and its password. **Do not** enter your regular N.A.Y.trading account email address (e.g. *john.doe@mailbox.com*) because predict.py will decide on snapshots using the given account and you probably don't want your real decisions mixed with the network's decisions.
 
-If you used the naming convention .ai you can monitor the AI's performance by selecting it on the [Stats page](http://naytrading.com/app/#!/stats). Otherwise, you can login using the .ai email address.
+If you used the naming convention .ai you can monitor the AI's performance by selecting it on the [Stats page](http://naytrading.com/stats). Otherwise, you can login using the .ai email address.
