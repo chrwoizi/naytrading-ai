@@ -25,7 +25,7 @@ parser.add_argument('--sell_checkpoint_dir', type=str, default='', help='Selling
 parser.add_argument('--proxy_url', type=str, default='', help='Proxy URL.')
 parser.add_argument('--proxy_user', type=str, default='', help='Proxy user.')
 parser.add_argument('--proxy_password', type=str, default='', help='Proxy password.')
-parser.add_argument('--naytrading_url', type=str, default='http://naytrading.com', help='NAYtrading base url.')
+parser.add_argument('--naytrading_url', type=str, default='https://naytrading.com', help='NAYtrading base url.')
 parser.add_argument('--naytrading_user', type=str, default='', help='NAYtrading AI user.')
 parser.add_argument('--naytrading_password', type=str, default='', help='NAYtrading password.')
 parser.add_argument('--model_name', type = str, default = 'GoogLeNet', help = 'The model name, e.g. GoogLeNet')
