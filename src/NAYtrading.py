@@ -1,4 +1,5 @@
 import requests
+import json
 
 
 class NAYtrading:
@@ -46,7 +47,8 @@ class NAYtrading:
         url = self.naytrading_url + '/api/snapshot/new/random'
         if max_age > 0:
             url = url + '?max_age=' + str(max_age)
-        r = self.session.get(url, proxies=self.proxies, timeout=120, headers={"Authorization": "Bearer " + self.jwt})
+        r = self.session.get(url, proxies=self.proxies, timeout=120, headers={
+                             "Authorization": "Bearer " + self.jwt})
 
         if r.status_code == 404:
             return None
@@ -61,7 +63,8 @@ class NAYtrading:
         url = self.naytrading_url + '/api/snapshot/new/open'
         if count > 0:
             url = url + '?count=' + str(count)
-        r = self.session.get(url, proxies=self.proxies, timeout=120, headers={"Authorization": "Bearer " + self.jwt})
+        r = self.session.get(url, proxies=self.proxies, timeout=120, headers={
+                             "Authorization": "Bearer " + self.jwt})
 
         if r.status_code == 404:
             return None
@@ -75,10 +78,10 @@ class NAYtrading:
     def set_decision(self, snapshot_id, decision):
         url = self.naytrading_url + '/api/decision'
 
-        r = self.session.post(url, {
+        r = self.session.post(url, json.dumps({
             'id': snapshot_id,
             'decision': decision
-        }, proxies=self.proxies, timeout=30, headers={"Authorization": "Bearer " + self.jwt})
+        }), proxies=self.proxies, timeout=30, headers={"Content-Type": "application/json", "Authorization": "Bearer " + self.jwt})
 
         if r.status_code != 200:
             raise Exception('%s returned %d' % (url, r.status_code))
@@ -92,8 +95,10 @@ class NAYtrading:
             raise Exception('%s returned status %d' % (url, data['status']))
 
     def export_snapshots(self, from_date, file_path, report_progress):
-        url = self.naytrading_url + '/api/export/user/snapshots/' + from_date.strftime('%Y%m%d%H%M%S')
-        r = self.session.get(url, proxies=self.proxies, timeout=600, stream=True, headers={"Authorization": "Bearer " + self.jwt})
+        url = self.naytrading_url + '/api/export/user/snapshots/' + \
+            from_date.strftime('%Y%m%d%H%M%S')
+        r = self.session.get(url, proxies=self.proxies, timeout=600, stream=True, headers={
+                             "Authorization": "Bearer " + self.jwt})
 
         if r.status_code != 200:
             raise Exception('%s returned %d' % (url, r.status_code))
@@ -105,8 +110,10 @@ class NAYtrading:
                     f.write(chunk)
 
     def count_snapshots(self, from_date):
-        url = self.naytrading_url + '/api/count/snapshots/' + from_date.strftime('%Y%m%d%H%M%S')
-        r = self.session.get(url, proxies=self.proxies, timeout=600, headers={"Authorization": "Bearer " + self.jwt})
+        url = self.naytrading_url + '/api/count/snapshots/' + \
+            from_date.strftime('%Y%m%d%H%M%S')
+        r = self.session.get(url, proxies=self.proxies, timeout=600, headers={
+                             "Authorization": "Bearer " + self.jwt})
 
         if r.status_code != 200:
             raise Exception('%s returned %d' % (url, r.status_code))
