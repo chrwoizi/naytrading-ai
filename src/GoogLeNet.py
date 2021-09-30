@@ -50,112 +50,112 @@ class GoogLeNet(NetworkBase):
         self.exit = self.exit_layer('exit', inception5p, self.fc_dropout_keep)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
-            with tf.variable_scope('predict'):
+            with tf.compat.v1.variable_scope('predict'):
 
-                self.exit_argmax = tf.argmax(self.exit, 1)
+                self.exit_argmax = tf.argmax(input=self.exit, axis=1)
                 if self.summary_level >= 1:
-                    tf.summary.scalar('value', self.exit_argmax)
+                    tf.compat.v1.summary.scalar('value', self.exit_argmax)
         
         else:
-            with tf.variable_scope('loss'):
+            with tf.compat.v1.variable_scope('loss'):
 
                 y_sg = tf.stop_gradient(self.y)
 
-                with tf.variable_scope('inception4a_exit'):
-                    softmax_inception4a_exit = tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_sg,
+                with tf.compat.v1.variable_scope('inception4a_exit'):
+                    softmax_inception4a_exit = tf.nn.softmax_cross_entropy_with_logits(labels=y_sg,
                                                                                           logits=inception4a_exit)
-                    loss_inception4a_exit = tf.reduce_mean(softmax_inception4a_exit)
+                    loss_inception4a_exit = tf.reduce_mean(input_tensor=softmax_inception4a_exit)
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', loss_inception4a_exit)
+                        tf.compat.v1.summary.scalar('value', loss_inception4a_exit)
 
-                with tf.variable_scope('inception4e_exit'):
-                    softmax_inception4a_exit = tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_sg,
+                with tf.compat.v1.variable_scope('inception4e_exit'):
+                    softmax_inception4a_exit = tf.nn.softmax_cross_entropy_with_logits(labels=y_sg,
                                                                                           logits=inception4e_exit)
-                    loss_inception4e_exit = tf.reduce_mean(softmax_inception4a_exit)
+                    loss_inception4e_exit = tf.reduce_mean(input_tensor=softmax_inception4a_exit)
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', loss_inception4e_exit)
+                        tf.compat.v1.summary.scalar('value', loss_inception4e_exit)
 
-                with tf.variable_scope('exit'):
-                    softmax_exit = tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_sg, logits=self.exit)
-                    loss_exit = tf.reduce_mean(softmax_exit)
+                with tf.compat.v1.variable_scope('exit'):
+                    softmax_exit = tf.nn.softmax_cross_entropy_with_logits(labels=y_sg, logits=self.exit)
+                    loss_exit = tf.reduce_mean(input_tensor=softmax_exit)
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', loss_exit)
+                        tf.compat.v1.summary.scalar('value', loss_exit)
 
-                with tf.variable_scope('combined'):
+                with tf.compat.v1.variable_scope('combined'):
                     self.loss = tf.add(tf.add(tf.scalar_mul(self.aux_exit_4a_weight, loss_inception4a_exit),
                                               tf.scalar_mul(self.aux_exit_4e_weight, loss_inception4e_exit)),
                                        tf.scalar_mul(self.exit_weight, loss_exit))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.loss)
+                        tf.compat.v1.summary.scalar('value', self.loss)
 
-            with tf.variable_scope('accuracy'):
+            with tf.compat.v1.variable_scope('accuracy'):
 
-                with tf.variable_scope('inception4a_exit'):
-                    correct_prediction_inception4a_exit = tf.equal(tf.argmax(inception4a_exit, 1), tf.argmax(self.y, 1))
-                    accuracy_inception4a_exit = tf.reduce_mean(tf.cast(correct_prediction_inception4a_exit, tf.float32))
+                with tf.compat.v1.variable_scope('inception4a_exit'):
+                    correct_prediction_inception4a_exit = tf.equal(tf.argmax(input=inception4a_exit, axis=1), tf.argmax(input=self.y, axis=1))
+                    accuracy_inception4a_exit = tf.reduce_mean(input_tensor=tf.cast(correct_prediction_inception4a_exit, tf.float32))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', accuracy_inception4a_exit)
+                        tf.compat.v1.summary.scalar('value', accuracy_inception4a_exit)
 
-                with tf.variable_scope('inception4e_exit'):
-                    correct_prediction_inception4e_exit = tf.equal(tf.argmax(inception4e_exit, 1), tf.argmax(self.y, 1))
-                    accuracy_inception4e_exit = tf.reduce_mean(tf.cast(correct_prediction_inception4e_exit, tf.float32))
+                with tf.compat.v1.variable_scope('inception4e_exit'):
+                    correct_prediction_inception4e_exit = tf.equal(tf.argmax(input=inception4e_exit, axis=1), tf.argmax(input=self.y, axis=1))
+                    accuracy_inception4e_exit = tf.reduce_mean(input_tensor=tf.cast(correct_prediction_inception4e_exit, tf.float32))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', accuracy_inception4e_exit)
+                        tf.compat.v1.summary.scalar('value', accuracy_inception4e_exit)
 
-                with tf.variable_scope('exit'):
-                    self.exit_argmax = tf.argmax(self.exit, 1)
-                    self.y_argmax = tf.argmax(self.y, 1)
+                with tf.compat.v1.variable_scope('exit'):
+                    self.exit_argmax = tf.argmax(input=self.exit, axis=1)
+                    self.y_argmax = tf.argmax(input=self.y, axis=1)
                     self.correct_prediction = tf.equal(self.exit_argmax, self.y_argmax)
-                    self.accuracy = tf.reduce_mean(tf.cast(self.correct_prediction, tf.float32))
+                    self.accuracy = tf.reduce_mean(input_tensor=tf.cast(self.correct_prediction, tf.float32))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.accuracy)
+                        tf.compat.v1.summary.scalar('value', self.accuracy)
 
-                with tf.variable_scope('combined'):
+                with tf.compat.v1.variable_scope('combined'):
                     accuracy_combined = tf.divide(
                         tf.add(tf.add(tf.scalar_mul(self.aux_exit_4a_weight, accuracy_inception4a_exit),
                                       tf.scalar_mul(self.aux_exit_4e_weight, accuracy_inception4e_exit)),
                                tf.scalar_mul(self.exit_weight, self.accuracy)),
                         tf.add(tf.add(self.aux_exit_4a_weight, self.aux_exit_4e_weight), self.exit_weight))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', accuracy_combined)
+                        tf.compat.v1.summary.scalar('value', accuracy_combined)
 
-            with tf.variable_scope('imitations'):
+            with tf.compat.v1.variable_scope('imitations'):
 
                 expected_one = tf.cast(self.y_argmax, tf.float32)
                 expected_zero = tf.subtract(float(1), expected_one)
                 actual_one = tf.cast(self.exit_argmax, tf.float32)
                 actual_zero = tf.subtract(float(1), actual_one)
 
-                with tf.variable_scope(options['action'] + 's_detected'):
+                with tf.compat.v1.variable_scope(options['action'] + 's_detected'):
                     self.positives_detected = tf.divide(
-                        tf.reduce_sum(tf.multiply(expected_one, actual_one)),
-                        tf.maximum(float(1), tf.reduce_sum(expected_one)))
+                        tf.reduce_sum(input_tensor=tf.multiply(expected_one, actual_one)),
+                        tf.maximum(float(1), tf.reduce_sum(input_tensor=expected_one)))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.positives_detected)
+                        tf.compat.v1.summary.scalar('value', self.positives_detected)
 
-                with tf.variable_scope('waits_detected'):
+                with tf.compat.v1.variable_scope('waits_detected'):
                     self.negatives_detected = tf.divide(
-                        tf.reduce_sum(tf.multiply(expected_zero, actual_zero)),
-                        tf.maximum(float(1), tf.reduce_sum(expected_zero)))
+                        tf.reduce_sum(input_tensor=tf.multiply(expected_zero, actual_zero)),
+                        tf.maximum(float(1), tf.reduce_sum(input_tensor=expected_zero)))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.negatives_detected)
+                        tf.compat.v1.summary.scalar('value', self.negatives_detected)
 
-                with tf.variable_scope(options['action'] + 's_correct'):
+                with tf.compat.v1.variable_scope(options['action'] + 's_correct'):
                     self.positives_correct = tf.divide(
-                        tf.reduce_sum(tf.multiply(expected_one, actual_one)),
-                        tf.maximum(float(1), tf.reduce_sum(actual_one)))
+                        tf.reduce_sum(input_tensor=tf.multiply(expected_one, actual_one)),
+                        tf.maximum(float(1), tf.reduce_sum(input_tensor=actual_one)))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.positives_correct)
+                        tf.compat.v1.summary.scalar('value', self.positives_correct)
 
-                with tf.variable_scope('waits_correct'):
+                with tf.compat.v1.variable_scope('waits_correct'):
                     self.negatives_correct = tf.divide(
-                        tf.reduce_sum(tf.multiply(expected_zero, actual_zero)),
-                        tf.maximum(float(1), tf.reduce_sum(actual_zero)))
+                        tf.reduce_sum(input_tensor=tf.multiply(expected_zero, actual_zero)),
+                        tf.maximum(float(1), tf.reduce_sum(input_tensor=actual_zero)))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.negatives_correct)
+                        tf.compat.v1.summary.scalar('value', self.negatives_correct)
 
     def __inception_module(self, name, x, out_1x1, reduce3, out_3x1, reduce5, out_5x1, out_pool):
-        with tf.variable_scope(name):
+        with tf.compat.v1.variable_scope(name):
             conv_reduce3 = self.conv_layer('conv_reduce_3x1', x, 1, 1, reduce3, True, False)
             conv_reduce5 = self.conv_layer('conv_reduce_5x1', x, 1, 1, reduce5, True, False)
 

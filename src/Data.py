@@ -7,9 +7,9 @@ class Data(object):
 
         column_defaults = [['0'], ['0'], ['0'], ['wait'], ['19700101']] + [[0.00] for i in range(first_day, last_day + 1)] + [[0.00] for i in range(0, other_features)]
 
-        with tf.name_scope('data'):
+        with tf.compat.v1.name_scope('data'):
 
-            assert tf.gfile.Exists(file), ('%s not found.' % file)
+            assert tf.io.gfile.exists(file), ('%s not found.' % file)
 
             file_count = self.__get_line_count(file)
 
@@ -21,7 +21,7 @@ class Data(object):
             self.count = self.batches * self.batch_size
 
             def parse_csv(value):
-                columns = tf.decode_csv(value, record_defaults = column_defaults, field_delim = ";")
+                columns = tf.io.decode_csv(records=value, record_defaults = column_defaults, field_delim = ";")
 
                 features = columns[5:len(columns)]
                 labels = columns[3]

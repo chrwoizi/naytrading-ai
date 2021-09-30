@@ -57,6 +57,8 @@ class NAYtrading:
             raise Exception('%s returned %d' % (url, r.status_code))
 
         data = r.json()
+        if not data is None and data['snapshot']:
+            data = data['snapshot']
         return data
 
     def new_ordered_snapshots(self, count):

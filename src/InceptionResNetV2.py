@@ -12,7 +12,7 @@ class InceptionResNetV2(NetworkBase):
 
         stem = self.__inception_resnet_stem(self.x)
 
-        with tf.name_scope('inception_resnet_a'):
+        with tf.compat.v1.name_scope('inception_resnet_a'):
             inception_resnet_a_1 = self.__inception_resnet_a(stem, 1)
             inception_resnet_a_2 = self.__inception_resnet_a(inception_resnet_a_1, 2)
             inception_resnet_a_3 = self.__inception_resnet_a(inception_resnet_a_2, 3)
@@ -21,7 +21,7 @@ class InceptionResNetV2(NetworkBase):
 
         reduction_a = self.__inception_resnet_reduction_a(inception_resnet_a_5)
 
-        with tf.name_scope('inception_resnet_b'):
+        with tf.compat.v1.name_scope('inception_resnet_b'):
             inception_resnet_b_1 = self.__inception_resnet_b(reduction_a, 1)
             inception_resnet_b_2 = self.__inception_resnet_b(inception_resnet_b_1, 2)
             inception_resnet_b_3 = self.__inception_resnet_b(inception_resnet_b_2, 3)
@@ -35,7 +35,7 @@ class InceptionResNetV2(NetworkBase):
 
         reduction_b = self.__inception_resnet_reduction_b(inception_resnet_b_10)
 
-        with tf.name_scope('inception_resnet_c'):
+        with tf.compat.v1.name_scope('inception_resnet_c'):
             inception_resnet_c_1 = self.__inception_resnet_c(reduction_b, 1)
             inception_resnet_c_2 = self.__inception_resnet_c(inception_resnet_c_1, 2)
             inception_resnet_c_3 = self.__inception_resnet_c(inception_resnet_c_2, 3)
@@ -44,66 +44,66 @@ class InceptionResNetV2(NetworkBase):
 
         average_pooling = self.avg_pool_layer('average_pooling', inception_resnet_c_5, 4, 1, padding='VALID')
 
-        dropout = tf.nn.dropout(average_pooling, self.fc_dropout_keep, name='dropout')
+        dropout = tf.nn.dropout(average_pooling, rate=1 - (self.fc_dropout_keep), name='dropout')
 
         self.exit = self.full_layer('exit', dropout, 2, False)
 
         if mode == tf.estimator.ModeKeys.PREDICT:
-            with tf.variable_scope('predict'):
-                self.exit_argmax = tf.argmax(self.exit, 1)
+            with tf.compat.v1.variable_scope('predict'):
+                self.exit_argmax = tf.argmax(input=self.exit, axis=1)
                 if self.summary_level >= 1:
-                    tf.summary.scalar('value', self.exit_argmax)
+                    tf.compat.v1.summary.scalar('value', self.exit_argmax)
 
         else:
-            with tf.variable_scope('loss'):
+            with tf.compat.v1.variable_scope('loss'):
                 y_sg = tf.stop_gradient(self.y)
-                softmax_exit = tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_sg, logits=self.exit)
-                self.loss = tf.reduce_mean(softmax_exit)
+                softmax_exit = tf.nn.softmax_cross_entropy_with_logits(labels=y_sg, logits=self.exit)
+                self.loss = tf.reduce_mean(input_tensor=softmax_exit)
                 if self.summary_level >= 1:
-                    tf.summary.scalar('value', self.loss)
+                    tf.compat.v1.summary.scalar('value', self.loss)
 
-            with tf.variable_scope('accuracy'):
-                self.exit_argmax = tf.argmax(self.exit, 1)
-                self.y_argmax = tf.argmax(self.y, 1)
+            with tf.compat.v1.variable_scope('accuracy'):
+                self.exit_argmax = tf.argmax(input=self.exit, axis=1)
+                self.y_argmax = tf.argmax(input=self.y, axis=1)
                 self.correct_prediction = tf.equal(self.exit_argmax, self.y_argmax)
-                self.accuracy = tf.reduce_mean(tf.cast(self.correct_prediction, tf.float32))
+                self.accuracy = tf.reduce_mean(input_tensor=tf.cast(self.correct_prediction, tf.float32))
                 if self.summary_level >= 1:
-                    tf.summary.scalar('value', self.accuracy)
+                    tf.compat.v1.summary.scalar('value', self.accuracy)
 
-            with tf.variable_scope('imitations'):
+            with tf.compat.v1.variable_scope('imitations'):
 
                 expected_one = tf.cast(self.y_argmax, tf.float32)
                 expected_zero = tf.subtract(float(1), expected_one)
                 actual_one = tf.cast(self.exit_argmax, tf.float32)
                 actual_zero = tf.subtract(float(1), actual_one)
 
-                with tf.variable_scope(options['action'] + 's_detected'):
+                with tf.compat.v1.variable_scope(options['action'] + 's_detected'):
                     self.positives_detected = tf.divide(
-                        tf.reduce_sum(tf.multiply(expected_one, actual_one)),
-                        tf.maximum(float(1), tf.reduce_sum(expected_one)))
+                        tf.reduce_sum(input_tensor=tf.multiply(expected_one, actual_one)),
+                        tf.maximum(float(1), tf.reduce_sum(input_tensor=expected_one)))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.positives_detected)
+                        tf.compat.v1.summary.scalar('value', self.positives_detected)
 
-                with tf.variable_scope('waits_detected'):
+                with tf.compat.v1.variable_scope('waits_detected'):
                     self.negatives_detected = tf.divide(
-                        tf.reduce_sum(tf.multiply(expected_zero, actual_zero)),
-                        tf.maximum(float(1), tf.reduce_sum(expected_zero)))
+                        tf.reduce_sum(input_tensor=tf.multiply(expected_zero, actual_zero)),
+                        tf.maximum(float(1), tf.reduce_sum(input_tensor=expected_zero)))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.negatives_detected)
+                        tf.compat.v1.summary.scalar('value', self.negatives_detected)
 
-                with tf.variable_scope(options['action'] + 's_correct'):
+                with tf.compat.v1.variable_scope(options['action'] + 's_correct'):
                     self.positives_correct = tf.divide(
-                        tf.reduce_sum(tf.multiply(expected_one, actual_one)),
-                        tf.maximum(float(1), tf.reduce_sum(actual_one)))
+                        tf.reduce_sum(input_tensor=tf.multiply(expected_one, actual_one)),
+                        tf.maximum(float(1), tf.reduce_sum(input_tensor=actual_one)))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.positives_correct)
+                        tf.compat.v1.summary.scalar('value', self.positives_correct)
 
-                with tf.variable_scope('waits_correct'):
+                with tf.compat.v1.variable_scope('waits_correct'):
                     self.negatives_correct = tf.divide(
-                        tf.reduce_sum(tf.multiply(expected_zero, actual_zero)),
-                        tf.maximum(float(1), tf.reduce_sum(actual_zero)))
+                        tf.reduce_sum(input_tensor=tf.multiply(expected_zero, actual_zero)),
+                        tf.maximum(float(1), tf.reduce_sum(input_tensor=actual_zero)))
                     if self.summary_level >= 1:
-                        tf.summary.scalar('value', self.negatives_correct)
+                        tf.compat.v1.summary.scalar('value', self.negatives_correct)
 
     def resnet_sum(self, x, residual):
         residual_scaled = tf.divide(residual, self.residual_scale, 'scale')
@@ -112,7 +112,7 @@ class InceptionResNetV2(NetworkBase):
 
     def __inception_resnet_stem(self, x):
 
-        with tf.name_scope('stem'):
+        with tf.compat.v1.name_scope('stem'):
             layer1_a1 = self.conv_layer('layer1_a1', x, 3, 2, 32, True, True, padding='VALID')
             layer1_a2 = self.conv_layer('layer1_a2', layer1_a1, 3, 1, 32, True, True, padding='VALID')
             layer1_a3 = self.conv_layer('layer1_a3', layer1_a2, 3, 1, 64, True, True)
@@ -146,7 +146,7 @@ class InceptionResNetV2(NetworkBase):
 
     def __inception_resnet_reduction_a(self, x):
 
-        with tf.name_scope('reduction_a'):
+        with tf.compat.v1.name_scope('reduction_a'):
             layer1_a1 = self.max_pool_layer('layer1_a1', x, 3, 2, padding='VALID')
 
             layer1_b1 = self.conv_layer('layer1_b1', x, 3, 2, 384, True, True, padding='VALID')
@@ -162,7 +162,7 @@ class InceptionResNetV2(NetworkBase):
 
     def __inception_resnet_reduction_b(self, x):
 
-        with tf.name_scope('reduction_b'):
+        with tf.compat.v1.name_scope('reduction_b'):
             layer1_a1 = self.max_pool_layer('layer1_a1', x, 3, 2, padding='VALID')
 
             layer1_b1 = self.conv_layer('layer1_b1', x, 1, 1, 256, True, True)
@@ -182,7 +182,7 @@ class InceptionResNetV2(NetworkBase):
 
     def __inception_resnet_a(self, x, index):
 
-        with tf.name_scope('inception_resnet_a_' + str(index)):
+        with tf.compat.v1.name_scope('inception_resnet_a_' + str(index)):
             layer1_a1 = self.conv_layer('layer1_a1', x, 1, 1, 32, True, True)
 
             layer1_b1 = self.conv_layer('layer1_b1', x, 1, 1, 32, True, True)
@@ -204,7 +204,7 @@ class InceptionResNetV2(NetworkBase):
 
     def __inception_resnet_b(self, x, index):
 
-        with tf.name_scope('inception_resnet_b_' + str(index)):
+        with tf.compat.v1.name_scope('inception_resnet_b_' + str(index)):
             layer1_a1 = self.conv_layer('layer1_a1', x, 1, 1, 192, True, True)
 
             layer1_b1 = self.conv_layer('layer1_b1', x, 1, 1, 128, True, True)
@@ -223,7 +223,7 @@ class InceptionResNetV2(NetworkBase):
 
     def __inception_resnet_c(self, x, index):
 
-        with tf.name_scope('inception_resnet_c_' + str(index)):
+        with tf.compat.v1.name_scope('inception_resnet_c_' + str(index)):
             layer1_a1 = self.conv_layer('layer1_a1', x, 1, 1, 192, True, True)
 
             layer1_b1 = self.conv_layer('layer1_b1', x, 1, 1, 128, True, True)

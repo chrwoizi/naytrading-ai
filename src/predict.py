@@ -14,6 +14,7 @@ import tensorflow as tf
 import glob
 import shutil
 import re
+import logging
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
@@ -145,7 +146,9 @@ def get_chart(snapshot):
 if __name__ == '__main__':
     FLAGS, unparsed = parser.parse_known_args()
 
-    tf.logging.set_verbosity(getattr(tf.logging, FLAGS.tf_log))
+    logger = tf.get_logger()
+    logger.setLevel(getattr(logging, FLAGS.tf_log))
+    tf.compat.v1.logging.set_verbosity(getattr(logging, FLAGS.tf_log))
 
     if not os.path.exists(FLAGS.buy_checkpoint_dir):
         raise Exception('Could not find buy checkpoint at %s' %
@@ -254,13 +257,13 @@ if __name__ == '__main__':
 
     def refresh_checkpoint(checkpoint_dir, checkpoint_files, checkpoint_file, action):
         if checkpoint_file != known_checkpoint_file[action]:
-            for file in glob.glob(checkpoint_dir + "/*"):
+            for file in glob.glob(os.path.join(checkpoint_dir, '*')):
                 os.unlink(file)
 
             for file in checkpoint_files:
                 shutil.copy(file, checkpoint_dir)
 
-            with open(checkpoint_dir + '/checkpoint', 'w') as text_file:
+            with open(os.path.join(checkpoint_dir, 'checkpoint'), 'w') as text_file:
                 text_file.write('model_checkpoint_path: \"%s\"' %
                                 os.path.basename(checkpoint_file))
 
@@ -470,7 +473,8 @@ if __name__ == '__main__':
                                 snapshot['ID'], item['decision'])
 
         except Exception as e:
-            print("Unexpected error:", str(e))
+            print("Unexpected error:", e)
+            raise e
 
         if sleep > 0:
             time.sleep(sleep)

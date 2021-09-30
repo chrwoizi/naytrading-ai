@@ -7,10 +7,6 @@ import datetime
 import tensorflow as tf
 import platform
 from shutil import copyfile
-from tensorflow.contrib.tpu.python.tpu import tpu_config
-from tensorflow.contrib.tpu.python.tpu import tpu_estimator
-from tensorflow.contrib.tpu.python.tpu import tpu_optimizer
-from tensorflow.contrib.cluster_resolver.python.training import TPUClusterResolver
 from tensorflow.python.estimator.estimator import _get_default_warm_start_settings
 
 #os.environ["CUDA_VISIBLE_DEVICES"]="-1"
@@ -32,7 +28,6 @@ parser.add_argument('--train_file', type = str, default = '../buying_train.csv',
 parser.add_argument('--first_day', type = int, default = 0, help = 'The first day column name e.g. -1814.')
 parser.add_argument('--last_day', type = int, default = 1023, help = 'The last day column name e.g. 0.')
 parser.add_argument('--action', type = str, default = 'buy', help = 'The label used if the user decided on an action for this dataset, e.g. buy or sell')
-parser.add_argument('--use_tpu', type = bool, default = False, help = 'Whether to use the TPU for training')
 parser.add_argument('--model_name', type = str, default = 'GoogLeNet', help = 'The model name, e.g. GoogLeNet')
 parser.add_argument('--save_summary_steps', type = int, default = 100, help = 'The steps between summary saves')
 parser.add_argument('--save_checkpoints_steps', type = int, default = 10000, help = 'The steps between checkpoint saves')
@@ -55,7 +50,7 @@ if __name__ == '__main__':
     train_file = FLAGS.train_file
     test_file = FLAGS.test_file
 
-    tf.logging.set_verbosity(tf.logging.INFO)
+    tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
     print('Preparing model directory')
 
@@ -70,7 +65,7 @@ if __name__ == '__main__':
         if not os.path.exists(FLAGS.model_dir):
             os.makedirs(FLAGS.model_dir)
 
-    ckpt_file = FLAGS.model_dir + '/checkpoint'
+    ckpt_file = os.path.join(FLAGS.model_dir, 'checkpoint')
 
     if not os.path.exists(ckpt_file):
         os.makedirs(ckpt_file)
@@ -100,39 +95,27 @@ if __name__ == '__main__':
 
         flags += ['load']
 
-        with open(FLAGS.model_dir + '/resume.bat', 'w') as text_file:
+        with open(os.path.join(FLAGS.model_dir, 'resume.bat'), 'w') as text_file:
             arg_str = ' '.join(['--%s=%s' % (flag, str(get_flag(flag))) for flag in flags])
             text_file.write('python train.py %s\npause' % arg_str)
 
-        with open(FLAGS.model_dir + '/resume_infinitely.bat', 'w') as text_file:
+        with open(os.path.join(FLAGS.model_dir, 'resume_infinitely.bat'), 'w') as text_file:
             arg_str = ' '.join(['--%s=%s' % (flag, str(get_flag_infinity(flag))) for flag in flags])
             text_file.write('python train.py %s\npause' % arg_str)
 
     if not FLAGS.load:
-        copyfile(os.path.abspath(__file__), FLAGS.model_dir + '/train.py')
-        copyfile(os.path.dirname(os.path.abspath(__file__)) + '/Data.py', FLAGS.model_dir + '/Data.py')
-        copyfile(os.path.dirname(os.path.abspath(__file__)) + '/NetworkBase.py', FLAGS.model_dir + '/NetworkBase.py')
-        copyfile(os.path.dirname(os.path.abspath(__file__)) + '/GoogLeNet.py', FLAGS.model_dir + '/GoogLeNet.py')
-        copyfile(os.path.dirname(os.path.abspath(__file__)) + '/InceptionResNetV2.py', FLAGS.model_dir + '/InceptionResNetV2.py')
-        copyfile(test_file, FLAGS.model_dir + '/test.csv')
-        copyfile(train_file, FLAGS.model_dir + '/train.csv')
+        copyfile(os.path.abspath(__file__), os.path.join(FLAGS.model_dir, 'train.py'))
+        copyfile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Data.py'), os.path.join(FLAGS.model_dir, 'Data.py'))
+        copyfile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'NetworkBase.py'), os.path.join(FLAGS.model_dir, 'NetworkBase.py'))
+        copyfile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'GoogLeNet.py'), os.path.join(FLAGS.model_dir, 'GoogLeNet.py'))
+        copyfile(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'InceptionResNetV2.py'), os.path.join(FLAGS.model_dir, 'InceptionResNetV2.py'))
+        copyfile(test_file, os.path.join(FLAGS.model_dir, 'test.csv'))
+        copyfile(train_file, os.path.join(FLAGS.model_dir, 'train.csv'))
         write_resume_bat(0)
-        with open(FLAGS.model_dir + '/tensorboard.bat', 'w') as text_file:
+        with open(os.path.join(FLAGS.model_dir, 'tensorboard.bat'), 'w') as text_file:
             text_file.write('tensorboard.exe --logdir=checkpoint')
-        test_file = FLAGS.model_dir + '/test.csv'
-        train_file = FLAGS.model_dir + '/train.csv'
-
-    dataset_count = 0
-    if FLAGS.use_tpu:
-        with open(train_file, 'r', encoding = 'utf8') as f:
-            i = 0
-            while True:
-                line = f.readline()
-                if not line:
-                    break
-                if i > 0 and len(line) > 0:
-                    dataset_count = dataset_count + 1
-                i = i + 1
+        test_file = os.path.join(FLAGS.model_dir, 'test.csv')
+        train_file = os.path.join(FLAGS.model_dir, 'train.csv')
 
     def input_fn(data_file, repeat, params, shuffle):
 
@@ -208,123 +191,63 @@ if __name__ == '__main__':
             raise Exception('Unknown model name: ' + FLAGS.model_name)
 
         if mode == tf.estimator.ModeKeys.TRAIN:
-            with tf.name_scope('adam'):
-                update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            with tf.compat.v1.name_scope('adam'):
+                update_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
                 with tf.control_dependencies(update_ops):
 
-                    optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.adam_learning_rate, epsilon=FLAGS.adam_epsilon)
+                    optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=FLAGS.adam_learning_rate, epsilon=FLAGS.adam_epsilon)
 
-                    if FLAGS.use_tpu:
-                        if platform.system() != 'Windows':
-                            print('using CrossShardOptimizer')
-                            optimizer = tpu_optimizer.CrossShardOptimizer(optimizer)
-                        else:
-                            print('skipping CrossShardOptimizer')
-
-                    train_op = optimizer.minimize(model.loss, tf.train.get_global_step())
+                    train_op = optimizer.minimize(model.loss, tf.compat.v1.train.get_global_step())
 
         else:
             train_op = None
 
         def metric_fn(y_argmax, exit_argmax, positives_detected, negatives_detected, positives_correct, negatives_correct):
             return {
-                'accuracy': tf.metrics.accuracy(y_argmax, exit_argmax),
-                'precision': tf.metrics.precision(y_argmax, exit_argmax),
-                FLAGS.action + 's_detected': tf.metrics.mean(positives_detected),
-                'waits_detected': tf.metrics.mean(negatives_detected),
-                FLAGS.action + 's_correct': tf.metrics.mean(positives_correct),
-                'waits_correct': tf.metrics.mean(negatives_correct)
+                'accuracy': tf.compat.v1.metrics.accuracy(y_argmax, exit_argmax),
+                'precision': tf.compat.v1.metrics.precision(y_argmax, exit_argmax),
+                FLAGS.action + 's_detected': tf.compat.v1.metrics.mean(positives_detected),
+                'waits_detected': tf.compat.v1.metrics.mean(negatives_detected),
+                FLAGS.action + 's_correct': tf.compat.v1.metrics.mean(positives_correct),
+                'waits_correct': tf.compat.v1.metrics.mean(negatives_correct)
             }
 
-        if FLAGS.use_tpu:
-
-            if mode == tf.estimator.ModeKeys.EVAL:
-                eval_metrics = (metric_fn, {
-                    'y_argmax': model.y_argmax,
-                    'exit_argmax': model.exit_argmax,
-                    'positives_detected': model.positives_detected,
-                    'negatives_detected': model.negatives_detected,
-                    'positives_correct': model.positives_correct,
-                    'negatives_correct': model.negatives_correct
-                })
-            else:
-                eval_metrics = None
-
-            return tpu_estimator.TPUEstimatorSpec(
-                mode = mode,
-                loss = model.loss,
-                train_op = train_op,
-                eval_metrics = eval_metrics
-            )
-
+        if mode == tf.estimator.ModeKeys.EVAL:
+            eval_metric_ops = metric_fn(model.y_argmax, model.exit_argmax, model.positives_detected, model.negatives_detected, model.positives_correct, model.negatives_correct)
         else:
+            eval_metric_ops = None
 
-            if mode == tf.estimator.ModeKeys.EVAL:
-                eval_metric_ops = metric_fn(model.y_argmax, model.exit_argmax, model.positives_detected, model.negatives_detected, model.positives_correct, model.negatives_correct)
-            else:
-                eval_metric_ops = None
-
-            return tf.estimator.EstimatorSpec(
-                mode = mode,
-                loss = model.loss,
-                train_op = train_op,
-                eval_metric_ops = eval_metric_ops
-            )
+        return tf.estimator.EstimatorSpec(
+            mode = mode,
+            loss = model.loss,
+            train_op = train_op,
+            eval_metric_ops = eval_metric_ops
+        )
 
     warm_start_from = ckpt_file if FLAGS.load else None
 
-    session_config = tf.ConfigProto()
+    session_config = tf.compat.v1.ConfigProto()
     session_config.gpu_options.allow_growth = True
     session_config.gpu_options.per_process_gpu_memory_fraction = 0.9
 
     model_params = {'days': FLAGS.last_day - FLAGS.first_day + 1}
 
-    if FLAGS.use_tpu:
-        if 'TPU_NAME' in os.environ:
-            tpu_grpc_url = TPUClusterResolver(
-                tpu = [os.environ['TPU_NAME']]).get_master()
-        else:
-            tpu_grpc_url = None
+    config = tf.estimator.RunConfig(
+        model_dir = ckpt_file,
+        save_summary_steps = FLAGS.save_summary_steps,
+        save_checkpoints_steps = FLAGS.save_checkpoints_steps,
+        keep_checkpoint_max = FLAGS.keep_checkpoint_max,
+        keep_checkpoint_every_n_hours = FLAGS.keep_checkpoint_every_n_hours,
+        log_step_count_steps = FLAGS.log_step_count_steps,
+        session_config = session_config
+    )
 
-        config = tpu_config.RunConfig(
-            master = tpu_grpc_url,
-            model_dir = ckpt_file,
-            save_summary_steps = FLAGS.save_summary_steps,
-            save_checkpoints_steps = FLAGS.save_checkpoints_steps,
-            keep_checkpoint_max = FLAGS.keep_checkpoint_max,
-            keep_checkpoint_every_n_hours = FLAGS.keep_checkpoint_every_n_hours,
-            log_step_count_steps = FLAGS.log_step_count_steps,
-            session_config = session_config,
-            tpu_config = tpu_config.TPUConfig(
-                iterations_per_loop = FLAGS.save_checkpoints_steps))
-
-        estimator = tpu_estimator.TPUEstimator(
-            model_fn = model_fn,
-            config = config,
-            params = model_params,
-            use_tpu = FLAGS.use_tpu,
-            train_batch_size = FLAGS.batch_size,
-            eval_batch_size = FLAGS.batch_size,
-            predict_batch_size = FLAGS.batch_size)
-        #estimator._warm_start_settings = _get_default_warm_start_settings(warm_start_from)
-
-    else:
-        config = tf.estimator.RunConfig(
-            model_dir = ckpt_file,
-            save_summary_steps = FLAGS.save_summary_steps,
-            save_checkpoints_steps = FLAGS.save_checkpoints_steps,
-            keep_checkpoint_max = FLAGS.keep_checkpoint_max,
-            keep_checkpoint_every_n_hours = FLAGS.keep_checkpoint_every_n_hours,
-            log_step_count_steps = FLAGS.log_step_count_steps,
-            session_config = session_config
-        )
-
-        estimator = tf.estimator.Estimator(
-            model_fn = model_fn,
-            #warm_start_from = warm_start_from,
-            config = config,
-            params = model_params
-        )
+    estimator = tf.estimator.Estimator(
+        model_fn = model_fn,
+        #warm_start_from = warm_start_from,
+        config = config,
+        params = model_params
+    )
 
     if FLAGS.epochs > 0:
 
@@ -334,10 +257,7 @@ if __name__ == '__main__':
             gln_aux_exit_4a_weight_falloff = epoch / FLAGS.gln_aux_exit_4a_weight_epochs
             gln_aux_exit_4e_weight_falloff = epoch / FLAGS.gln_aux_exit_4e_weight_epochs
 
-            if FLAGS.use_tpu:
-                estimator.train(input_fn = train_input_fn, max_steps = FLAGS.repeat_train_data * int(dataset_count / FLAGS.batch_size))
-            else:
-                estimator.train(input_fn = train_input_fn)
+            estimator.train(input_fn = train_input_fn)
 
             ev = estimator.evaluate(input_fn = test_input_fn)
 
