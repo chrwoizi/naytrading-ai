@@ -68,7 +68,6 @@ parser.add_argument('--max_age', type=float, default=0,
 parser.add_argument('--historical_batch', type=float, default=0,
                     help='The number of open snapshots to grab in chronological order since the beginning of time. Set 0 to use max_age order logic.')
 
-
 def sample(chart, x):
     return chart[max(0, min(int(x), len(chart) - 1))]
 
@@ -158,7 +157,7 @@ if __name__ == '__main__':
     if not os.path.exists(buy_checkpoint_dir):
         os.makedirs(buy_checkpoint_dir)
 
-    if not os.path.exists(FLAGS.sell_checkpoint_dir):
+    if not os.path.exists(os.path.join(FLAGS.sell_checkpoint_dir, 'checkpoint')):
         sell_checkpoint_dir = None
         print('Could not find sell checkpoint at %s' %
               FLAGS.sell_checkpoint_dir)
@@ -477,4 +476,5 @@ if __name__ == '__main__':
             raise e
 
         if sleep > 0:
+            print("Sleeping %d seconds" % (sleep))
             time.sleep(sleep)

@@ -4,9 +4,9 @@ This is the machine learning part of [N.A.Y.trading](https://github.com/chrwoizi
 
 ## :mortar_board: Training a Convolutional Neural Network on the recorded data
 
-1. Install [Python 3.6](https://www.python.org/downloads/release/python-366/). Include PIP if asked by the setup.
+1. Install [Python 3](https://www.python.org/).
 
-2. If you have an NVIDIA graphics card: Install the [graphics card driver](https://www.nvidia.com/Download/index.aspx?lang=en-us), [CUDA Toolkit 10.0.0](https://developer.nvidia.com/cuda-downloads) and [cuDNN for CUDA 10.0](https://developer.nvidia.com/cudnn). Use the exact versions. (See the [TensorFlow GPU Support website](https://www.tensorflow.org/install/gpu#software_requirements) for reference on GPU toolkits compatible with Tensorflow 1.15). If you install the wrong version of CUDA or cuDNN it wont work!
+2. If you have an NVIDIA graphics card: Install the [graphics card driver](https://www.nvidia.com/Download/index.aspx?lang=en-us), [CUDA Toolkit 11.2.0](https://developer.nvidia.com/cuda-downloads) and [cuDNN for CUDA 11.2](https://developer.nvidia.com/cudnn). Use the exact versions. (See the [TensorFlow GPU Support website](https://www.tensorflow.org/install/gpu#software_requirements) for reference on GPU toolkits compatible with Tensorflow). If you install the wrong version of CUDA or cuDNN it wont work!
 
 3. Download the naytrading-ai repository as zip or clone with git.
 
@@ -44,63 +44,64 @@ Once you have a trained network for buying (and preferably another network for s
 Go to [http://naytrading.com](http://naytrading.com) and register a new account for your AI. A recommended account email address is your real email address followed by _.ai_, e.g. _john.doe@mailbox.com.ai_. That email address doesn't need to actually exist. Consider it an account "name". Using that convention is optional, but it automatically enables some convenient features.
 
 <details>
-<summary>How to install for predicting on Raspberry PI</summary>
+<summary>How to predict using Docker</summary>
+
+-   copy your buying model directory path, e.g. buying20180629121604, to ./buy_checkpoint. Make sure that the ./buy_checkpoint/checkpoint file exists.
+-   OPTIONAL: copy your selling model directory path, e.g. selling20180629121604, to ./sell_checkpoint. Make sure that the ./sell_checkpoint/checkpoint file exists.
+
+-   Export your naytrading ai user credentials (see script below). Enter your AI account email address (the one ending on _.ai_) and its password. **Do not** enter your regular N.A.Y.trading account email address (e.g. _john.doe@mailbox.com_) because predict.py will decide on snapshots using the given account and you probably don't want your real decisions mixed with the network's decisions.
 
 ```sh
-pi@raspberrypi:~/ $ git clone https://github.com/chrwoizi/naytrading-ai.git naytrading-ai
-pi@raspberrypi:~/ $ cd naytrading-ai
-pi@raspberrypi:~/naytrading-ai $ ./install.sh
+user@host:~/ $ export naytrading_user=(your naytrading ai user email)
+user@host:~/ $ export naytrading_password=(your naytrading ai user password)
 ```
 
-Run predict.py with trained buying and selling models:
-
 ```sh
-# replace %1 with your buying model directory path, e.g. model20180629121604
-# replace %2 with your selling model directory path, e.g. model20180703114329
-# replace %3 with the number of seconds the AI should wait between snapshots, e.g. 30
-python3.4 predict.py --buy_checkpoint_dir=%1\\checkpoint --sell_checkpoint_dir=%2\\checkpoint --sleep=%3
+user@host:~/ $ git clone https://github.com/chrwoizi/naytrading-ai.git naytrading-ai
+user@host:~/ $ cd naytrading-ai
+user@host:~/naytrading-ai $ docker compose up
 ```
 
-Having a selling network is optional. If you don't have enough training data yet to achieve a satisfying ratio of sells_correct (see Tensorboard above), you can remove the sell_checkpoint_dir option and use thresholds to make sell decisions.
+Having a selling network is optional. If you don't have enough training data yet to achieve a satisfying ratio of sells_correct (see Tensorboard above), you can edit docker-compose.yml to use thresholds to make sell decisions.
 
 ```sh
-# replace %1 with your buying model directory path, e.g. model20180629121604
-# replace %2 with the number of seconds the AI should wait between snapshots, e.g. 30
 # see predict.py for help on the threshold parameters.
-python3.4 predict.py --buy_checkpoint_dir=%1\\checkpoint --sleep=%2 --min_loss=0.1 --min_gain=0.04 --max_loss=0.3 --max_gain=0.15 --sell_at_max_factor=1
+python3 predict.py ... --min_loss=0.1 --min_gain=0.04 --max_loss=0.3 --max_gain=0.15 --sell_at_max_factor=1
 ```
 
 </details><p></p>
 
 <details>
-<summary>How to install for predicting on Windows</summary>
-
-Download Python 3.x from https://www.python.org/downloads/ and run the installer.
-
-Drag your model folder(s) onto predict_dropped.bat or run predict.py from the console:
+<summary>How to predict without Docker</summary>
 
 ```sh
-# replace %1 with your buying model directory path, e.g. model20180629121604
-# replace %2 with your selling model directory path, e.g. model20180703114329
-# replace %3 with the number of seconds the AI should wait between snapshots, e.g. 30
-pip install requests
-pip install tensorflow
-python predict.py --buy_checkpoint_dir=%1\\checkpoint --sell_checkpoint_dir=%2\\checkpoint --sleep=%3
+user@host:~/ $ git clone https://github.com/chrwoizi/naytrading-ai.git naytrading-ai
+user@host:~/ $ cd naytrading-ai
+user@host:~/naytrading-ai $ sudo apt-get -y install libatlas-base-dev
+user@host:~/naytrading-ai $ sudo pip3 install requests
+user@host:~/naytrading-ai $ sudo pip3 install tensorflow
 ```
 
-Having a selling network is optional. If you don't have enough training data yet to achieve a satisfying ratio of sells_correct (see Tensorboard above), you can remove the sell_checkpoint_dir option and use thresholds to make sell decisions. Drag your buying model directory onto predict_dropped.bat or run predict.py from the console:
+Run predict.py with trained buying and selling models:
 
 ```sh
-# replace %1 with your buying model directory path, e.g. model20180629121604
+# replace %1 with your buying model directory path, e.g. buying20180629121604
+# replace %2 with your selling model directory path, e.g. selling20180703114329
+# replace %3 with the number of seconds the AI should wait between snapshots, e.g. 30
+python3 predict.py --buy_checkpoint_dir=%1 --sell_checkpoint_dir=%2 --sleep=%3
+```
+
+When asked, enter your AI account email address (the one ending on _.ai_) and its password. **Do not** enter your regular N.A.Y.trading account email address (e.g. _john.doe@mailbox.com_) because predict.py will decide on snapshots using the given account and you probably don't want your real decisions mixed with the network's decisions.
+
+Having a selling network is optional. If you don't have enough training data yet to achieve a satisfying ratio of sells_correct (see Tensorboard above), you can remove the sell_checkpoint_dir option and use thresholds to make sell decisions.
+
+```sh
+# replace %1 with your buying model directory path, e.g. buying20180629121604
 # replace %2 with the number of seconds the AI should wait between snapshots, e.g. 30
 # see predict.py for help on the threshold parameters.
-pip install requests
-pip install tensorflow
-python predict.py --buy_checkpoint_dir=%1\\checkpoint --sleep=%2 --min_loss=0.1 --min_gain=0.04 --max_loss=0.3 --max_gain=0.15 --sell_at_max_factor=1
+python3 predict.py --buy_checkpoint_dir=%1 --sleep=%2 --min_loss=0.1 --min_gain=0.04 --max_loss=0.3 --max_gain=0.15 --sell_at_max_factor=1
 ```
 
 </details><p></p>
 
-When asked, enter your AI account email address (the one ending on _.ai_) and its password. **Do not** enter your regular N.A.Y.trading account email address (e.g. _john.doe@mailbox.com_) because predict.py will decide on snapshots using the given account and you probably don't want your real decisions mixed with the network's decisions.
-
-If you used the naming convention .ai you can monitor the AI's performance by selecting it on the [Stats page](http://naytrading.com/stats). Otherwise, you can login using the .ai email address.
+If you used the ai user naming convention (your own email address plus '.ai') you can monitor the AI's performance by selecting it on the [Stats page](http://naytrading.com/stats).

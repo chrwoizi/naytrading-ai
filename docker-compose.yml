@@ -1,0 +1,15 @@
+version: "2"
+services:
+    naytrading-ai:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: naytrading-ai
+        image: naytrading-ai:latest
+        restart: unless-stopped
+        environment:
+            - NODE_ENV=production
+        volumes:
+            - ./buy_checkpoint:/home/theuser/buy_checkpoint
+            - ./sell_checkpoint:/home/theuser/sell_checkpoint
+        command: python3 predict.py --naytrading_user=$naytrading_user --naytrading_password=$naytrading_password --buy_checkpoint_dir=/home/theuser/buy_checkpoint --sell_checkpoint_dir=/home/theuser/sell_checkpoint --historical_batch=10 --sleep=30
